@@ -1,0 +1,205 @@
+#!env python
+
+import json
+import argparse
+import sys
+import requests
+import polling
+import urllib3
+
+try:
+    import configparser as ConfigParser
+except:
+    import ConfigParser
+
+
+# Function for Token Generation
+def getSession(uri,port,l,p):
+    global session
+    # Set the URL for this REST call
+    url = "https://%s:%s%s" % (uri,port,"/session")
+    payload = {'username': l, 'password': p}
+    token = requests.post(url,json=payload,headers=headers,verify=False)
+    #return((token.json())["token"])
+    session.headers.update({'X-Cookie': 'token=' + (token.json())["token"]})
+
+# Function for Policy Creation
+def createPolicy(session,nesshost,nessport):
+    # Set the URL for this REST call
+    url = "https://%s:%s%s" % (nesshost, nessport, "/policies")
+    data = open(args.policy).read()
+    r = session.post(url, data=data, headers=headers, verify=False)
+    return(r.json()["policy_id"])
+
+def deletePolicy(session):
+    url = "https://%s:%s%s%s" % (nesshost, nessport, "/policies/", policyid)
+    r = session.delete(url, headers=headers, verify=False)
+
+def createScan(session):
+    # Set the URL for this REST call
+    url = "https://%s:%s%s" % (nesshost, nessport, "/scans")
+
+    myscan = {}
+    myscan['uuid'] = templateid
+
+    settings = {'name': scan_name,
+    'description': scan_desc,
+    'enabled': scan_enabled,
+    'launch': scan_launch,
+    'policy_id': policyid,
+    'text_targets': scan_targets
+    }
+
+    myscan['settings'] = settings
+
+    scanjson = json.dumps(myscan)
+
+    r = session.post(url, data=scanjson, headers=headers, verify=False)
+    return(r.json()['scan']['id'])
+
+def deleteScan(session):
+    url = "https://%s:%s%s%s" % (nesshost, nessport, "/scans/", scanid)
+    r = session.delete(url, headers=headers, verify=False)
+
+def launchScan(session):
+    url = "https://%s:%s%s%s%s" % (nesshost, nessport, "/scans/", scanid, "/launch")
+    r = session.post(url, headers=headers, verify=False)
+
+def getScanTemplateUUID(session,nesshost,nessport):
+    url = "https://%s:%s%s" % (nesshost, nessport, "/editor/policy/templates")
+    r = session.get(url, headers=headers, verify=False)
+    #print(r.json()['templates'][0]['name'])
+    for tc in r.json()['templates']:
+        if tc['name'] == "custom":
+            uuid = tc['uuid']
+    return(uuid)
+
+def scan_response(response):
+    print(response.json()['info']['status'])
+    if response.json()['info']['status'] == "completed":
+        return True
+    else:
+        print("Waiting for Scan to finish....")
+        return False
+
+def report_response(response):
+    print(response.json()['status'])
+    if response.json()['status'] == "ready":
+        return True
+    else:
+        print("Waiting for Report to finish....")
+        return False
+
+
+def scanPolling(session):
+    url = "https://%s:%s%s%s" % (nesshost, nessport, "/scans/", scanid)
+    try:
+        polling.poll(lambda: session.get(url, headers=headers, verify=False), check_success=scan_response, step=5,
+                     poll_forever=True)
+    except polling.TimeoutException:
+        print("Timeout waiting for Scan to complete...")
+        sys.exit(1)
+
+def getReport(session):
+    url = "https://%s:%s%s%s%s" % (nesshost, nessport, "/scans/", scanid, "/export")
+
+    report = {}
+    report['format'] = report_format
+    report['chapters'] = report_types
+    reportjson = json.dumps(report)
+
+    r = session.post(url, data=reportjson, headers=headers, verify=False)
+    print(r.json())
+    filenum = r.json()['file']
+
+    reporturl = "https://%s:%s%s%s%s%s%s" % (nesshost, nessport, "/scans/", scanid, "/export/", filenum, "/status")
+    try:
+        polling.poll(lambda: session.get(reporturl, headers=headers, verify=False), check_success=report_response, step=5,
+                     poll_forever=True)
+    except polling.TimeoutException:
+        print("Timeout waiting for Report to complete...")
+        sys.exit(1)
+
+    pullreporturl = "https://%s:%s%s%s%s%s%s" % (nesshost, nessport, "/scans/", scanid, "/export/", filenum, "/download")
+    r = session.get(pullreporturl, headers=headers, verify=False, stream=True)
+    with open(report_filename, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=1024):
+            if chunk:
+                f.write(chunk)
+
+
+
+
+
+# Arguments for script
+parser = argparse.ArgumentParser()
+parser.add_argument("-c", "--config", default='example.cfg', help="config file to use")
+parser.add_argument("-t", "--targets",default='127.0.0.1',help="targets for the scan")
+parser.add_argument("-p", "--policy",default='Example_Policy.json',help="Scanning Policy File to Use")
+parser.add_argument("-d", "--cleanup", default='', help="request for cleanup")
+
+args = parser.parse_args()
+
+# Disable Certificate warnings
+urllib3.disable_warnings()
+
+#if not args.config:
+#    print("No config file specified, please specify with -c")
+#    sys.exit(1)
+
+# Read in Config File
+config = ConfigParser.ConfigParser()
+config.readfp(open(args.config))
+
+try:
+    login = config.get('server', 'login')
+    password = config.get('server', 'password')
+    nesshost = config.get('server', 'uri')
+    nessport = config.get('server', 'port')
+    scan_name = config.get('scan', 'name')
+    scan_desc = config.get('scan', 'description')
+    scan_enabled = config.get('scan', 'enabled')
+    scan_launch = config.get('scan', 'launch')
+    scan_targets = config.get('scan', 'targets')
+    report_format = config.get('report', 'format')
+    report_types = config.get('report', 'types')
+    report_filename = config.get('report', 'filename')
+except:
+    pass
+
+# Global Variables
+headers = {'Content-Type': 'application/json'}
+session = requests.Session()
+
+# The Main Show starts here
+
+# Generate token and store in session for rest of requests
+getSession(nesshost,nessport,login,password)
+
+#Cleanup
+if args.cleanup:
+    deleteScan(session)
+    deletePolicy(session)
+    print("Scanner Cleanup Completed")
+    sys.exit(0)
+
+# Create the Nessus Policy
+policyid = createPolicy(session,nesshost,nessport)
+
+# Create the Nessus Scan
+templateid = getScanTemplateUUID(session,nesshost,nessport)
+scanid = createScan(session)
+
+#Launch the Scan
+launchScan(session)
+
+scanPolling(session)
+
+getReport(session)
+
+deleteScan(session)
+deletePolicy(session)
+print("Scanner Cleanup Completed")
+
+
+
