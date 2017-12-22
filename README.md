@@ -15,8 +15,8 @@ Current Platforms Supported:
  
 ## Get Started
 ```
-git clone https://github.com/fatalglitch/ness_scan
-cd ness_scan
+git clone https://github.com/fatalglitch/nestivus
+cd nestivus
 pip install -r requirements.txt
 ```
 The example.cfg file contains settings specific to your environment,
