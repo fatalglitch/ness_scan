@@ -6,12 +6,15 @@ import sys
 import requests
 import polling
 import urllib3
+import logging
 
 try:
     import configparser as ConfigParser
 except:
     import ConfigParser
 
+#Implement Logging
+# https://fangpenlin.com/posts/2012/08/26/good-logging-practice-in-python/
 
 # Function for Token Generation
 def getSession(uri,port,l,p):
