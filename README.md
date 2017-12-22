@@ -1,6 +1,7 @@
+[![Build Status](https://travis-ci.org/fatalglitch/nestivus.svg?branch=master)](https://travis-ci.org/fatalglitch/nestivus)
 # Nestivus
 
-###Nessus for the rest tiv us
+### Nessus for the rest tiv us
 
 Simple utility to automate scanning, reporting, and delivery of reports from Nessus vulnerability scanners.
 Written to fulfill a need to better automate scans and reporting across multiple networks, this tool
