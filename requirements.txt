@@ -2,4 +2,3 @@ requests
 polling
 urllib3
 logging
-smtplib
