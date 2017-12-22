@@ -208,8 +208,10 @@ try:
     report_filename = config.get('report', 'filename')
     email_from = config.get('email', 'from')
     email_to = config.get('email', 'to')
+    email_subject = config.get('email', 'subject')
     email_server = config.get('email', 'server')
     email_port = config.get('email', 'port')
+    log_path = config.get('logging', 'path')
 except:
     pass
 
@@ -220,7 +222,7 @@ if args.debug:
     logger.setLevel(logging.DEBUG)
 else:
     logger.setLevel(logging.INFO)
-handler = logging.FileHandler('ness_scan.log')
+handler = logging.FileHandler(log_path)
 if args.debug:
     logger.setLevel(logging.DEBUG)
 else:
@@ -262,7 +264,7 @@ scanPolling(session)
 getReport(session)
 
 #Email Report
-send_mail(email_from, email_to, "Nessus Scanning Results", '', report_filename, email_server, email_port)
+send_mail(email_from, email_to, email_subject, '', report_filename, email_server, email_port)
 
 #Cleanup
 deleteScan(session)
