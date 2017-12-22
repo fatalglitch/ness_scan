@@ -1,5 +1,5 @@
-# NessScan
-
+# Nestivus
+##Nessus for the rest tiv us
 Simple utility to automate scanning, reporting, and delivery of reports from Nessus vulnerability scanners.
 Written to fulfill a need to better automate scans and reporting across multiple networks, this tool
 provides easier methods to execute automated scans using a scheduling tool of choice. 
@@ -23,7 +23,7 @@ you will need to review and update to match your network.
 Once your config file is updated, you can run the scanner
 
 ```
-./ness_scan -c <config_file>
+./nestivus -c <config_file>
 ```
 
 ## Scanning Policy
