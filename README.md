@@ -34,7 +34,16 @@ The scanning policy is based off of Example_Policy.json, which is loaded by defa
 You can modify this to customize your scan policy, and use the '-p' flag to choose the policy for the scan.
 
 ## Options
-* -h to print the help menu
-* -d will enable debug to log file
-* -t specify scan target (this overrides the config file)
-* -p specify policy template for scans
+```
+usage: nestivus [-h] [-c CONFIG] [-t TARGETS] [-p POLICY] [-d] [-e]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        config file to use
+  -t TARGETS, --targets TARGETS
+                        targets for the scan
+  -p POLICY, --policy POLICY
+                        Scanning Policy File to Use
+  -d, --debug           enable Debug Logging
+```

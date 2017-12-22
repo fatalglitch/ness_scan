@@ -175,7 +175,6 @@ parser.add_argument("-c", "--config", default='example.cfg', help="config file t
 parser.add_argument("-t", "--targets",default='',help="targets for the scan")
 parser.add_argument("-p", "--policy",default='Example_Policy.json',help="Scanning Policy File to Use")
 parser.add_argument("-d", "--debug", action='store_true', help="enable Debug Logging")
-parser.add_argument("-e", "--debugemail", action='store_true', help="DEBUG: only email report")
 
 args = parser.parse_args()
 
@@ -237,12 +236,6 @@ headers = {'Content-Type': 'application/json'}
 session = requests.Session()
 
 # The Main Show starts here
-
-if args.debugemail:
-    logger.debug('Filename is: %s', report_filename)
-    send_mail(email_from, email_to, "Nessus Scanning Results", '', report_filename, email_server, email_port)
-    sys.exit(0)
-
 logger.info('-----START-----')
 logger.info('Scanner Start')
 getSession(nesshost,nessport,login,password)
