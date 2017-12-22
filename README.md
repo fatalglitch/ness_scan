@@ -9,7 +9,7 @@ provides easier methods to execute automated scans using a scheduling tool of ch
 
 Work Conducted by:
 ---------------------------------------
-* Tom Callahan [Twitter] @tomtheitguy
+* Tom Callahan [Twitter]@tomtheitguy
 
 Current Platforms Supported:
 * Ubuntu 16+
