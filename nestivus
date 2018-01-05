@@ -165,7 +165,12 @@ def send_mail(send_from, send_to, subject, text, filetosend, server, port):
     msg.attach(part)
 
     smtp = smtplib.SMTP(server, port)
-    smtp.sendmail(send_from, send_to, msg.as_string())
+    try:
+        smtp.sendmail(send_from, send_to, msg.as_string())
+    except SMTPException as e:
+        logger.info("Error while attempting to Email Report...")
+        logger.info("Error was : %s", str(e))
+        sys.exit(1)
     smtp.quit()
 
 
