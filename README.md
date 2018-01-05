@@ -29,6 +29,17 @@ Once your config file is updated, you can run the scanner
 ./nestivus -c <config_file>
 ```
 
+## Testing Options
+Testing can be performed by using nohup execution like below:
+```
+nohup ./nestivus -c example.cfg &
+```
+This will allow execution of the script in the background, and you can then use tail to watch the script execute. Debugging can be enabled by adding the -d flag to the nohup execution
+```
+nohup ./nestivus -c example.cfg -d &
+tail -f /tmp/logfile.log
+```
+The logfile location and name is based on what you have set in your configuration file.
 ## Scanning Policy
 The scanning policy is based off of Example_Policy.json, which is loaded by default.
 You can modify this to customize your scan policy, and use the '-p' flag to choose the policy for the scan.
