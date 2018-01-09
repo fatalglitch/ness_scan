@@ -9,6 +9,8 @@ import urllib3
 import logging
 import smtplib
 import os
+import datetime
+import calendar
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
@@ -173,6 +175,41 @@ def send_mail(send_from, send_to, subject, text, filetosend, server, port):
         sys.exit(1)
     smtp.quit()
 
+def check_schedule():
+    if args.schedulerdebug:
+        today = datetime.datetime.now()
+        
+        if schedule_lastdayofmonth != "NULL":
+            if schedule_lastdayofmonth.upper() == "SUNDAY":
+                numday = 1
+            elif schedule_lastdayofmonth.upper() == "SATURDAY":
+                numday = 2
+            elif schedule_lastdayofmonth.upper() == "FRIDAY":
+                numday = 3
+            elif schedule_lastdayofmonth.upper() == "THURSDAY":
+                numday = 4
+            elif schedule_lastdayofmonth.upper() == "WEDNESDAY":
+                numday = 5
+            elif schedule_lastdayofmonth.upper() == "TUESDAY":
+                numday = 6
+            elif schedule_lastdayofmonth.upper() == "MONDAY":
+                numday = 7
+            runday = max(week[-numday] for week in calendar.monthcalendar(today.year,today.month))
+            if runday == today.day:
+                print "I'd be running today!!!"
+            else:
+                print "Not a good day to run"
+#        else:
+#            if schedule_day == today.dayofweek:
+#                print "Check more things"
+#            else:
+#                print "Not running today"
+#                sys.exit(1)
+
+    else:
+        sys.exit(1)
+
+
 
 # Arguments for script
 parser = argparse.ArgumentParser()
@@ -180,6 +217,7 @@ parser.add_argument("-c", "--config", default='example.cfg', help="config file t
 parser.add_argument("-t", "--targets",default='',help="targets for the scan")
 parser.add_argument("-p", "--policy",default='Example_Policy.json',help="Scanning Policy File to Use")
 parser.add_argument("-d", "--debug", action='store_true', help="enable Debug Logging")
+parser.add_argument("-s", "--schedulerdebug", action='store_true', help="enable Scheduler Debugging")
 
 args = parser.parse_args()
 
@@ -216,6 +254,12 @@ try:
     email_server = config.get('email', 'server')
     email_port = config.get('email', 'port')
     log_path = config.get('logging', 'path')
+    schedule_minute = config.get('schedule','minute')
+    schedule_hour = config.get('schedule','hour')
+    schedule_day = config.get('schedule','day')
+    schedule_dayofweek = config.get('schedule','dayofweek')
+    schedule_weekofmonth = config.get('schedule','weekofmonth')
+    schedule_lastdayofmonth = config.get('schedule','lastdayofmonth')
 except:
     pass
 
@@ -235,6 +279,12 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 # End Logging Setup
+
+#Implement scheduler check in config
+# CODE HERE
+if args.schedulerdebug:
+    check_schedule()
+    sys.exit(1)
 
 # Global Variables
 headers = {'Content-Type': 'application/json'}
