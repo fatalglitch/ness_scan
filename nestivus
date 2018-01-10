@@ -37,6 +37,10 @@ def getSession(uri,port,l,p):
     except requests.exceptions.RequestException as e:
       logger.error("Error occurred trying to connect: %s", e)
       sys.exit(1)
+#    if token.json()["error"]:
+#        logger.debug('Session request result: %s', token.json())
+#        logger.error('Session Login Failed, Please Check Credentials')
+#        sys.exit(1)
     logger.debug('Session request result: %s', token.json())
     logger.info('Retrieved Session Token: %s', token.json()["token"])
     session.headers.update({'X-Cookie': 'token=' + (token.json())["token"]})
@@ -134,32 +138,36 @@ def scanPolling(session):
 def getReport(session):
     url = "https://%s:%s%s%s%s" % (nesshost, nessport, "/scans/", scanid, "/export")
 
-    report = {}
-    report['format'] = report_format
-    report['chapters'] = report_types
-    reportjson = json.dumps(report)
+    logger.debug("Requested report formats: %s", report_format)
+    for repform in report_format.split(','):
+        repformat = repform.strip()
+        report = {}
+        report['format'] = repformat
+        report['chapters'] = report_types
+        reportjson = json.dumps(report)
 
-    r = session.post(url, data=reportjson, headers=headers, verify=False)
-    logger.debug('Output from Report Generation: %s', r.json())
-    filenum = r.json()['file']
+        r = session.post(url, data=reportjson, headers=headers, verify=False)
+        logger.debug('Output from Report Generation: %s', r.json())
+        filenum = r.json()['file']
 
-    reporturl = "https://%s:%s%s%s%s%s%s" % (nesshost, nessport, "/scans/", scanid, "/export/", filenum, "/status")
-    try:
-        # Poll every 5 seconds for 300 seconds (5 minutes)
-        polling.poll(lambda: session.get(reporturl, headers=headers, verify=False), check_success=report_response, step=5,
+        reporturl = "https://%s:%s%s%s%s%s%s" % (nesshost, nessport, "/scans/", scanid, "/export/", filenum, "/status")
+        try:
+            # Poll every 5 seconds for 300 seconds (5 minutes)
+            polling.poll(lambda: session.get(reporturl, headers=headers, verify=False), check_success=report_response, step=5,
                      timeout=300)
-    except polling.TimeoutException:
-        logger.info("Timeout waiting for Report Generation to complete...")
-        print("Timed out waiting for Report Generation to complete. Check logs for additional information.")
-        sys.exit(1)
+        except polling.TimeoutException:
+            logger.info("Timeout waiting for Report Generation to complete...")
+            print("Timed out waiting for Report Generation to complete. Check logs for additional information.")
+            sys.exit(1)
 
-    pullreporturl = "https://%s:%s%s%s%s%s%s" % (nesshost, nessport, "/scans/", scanid, "/export/", filenum, "/download")
-    r = session.get(pullreporturl, headers=headers, verify=False, stream=True)
-    with open(report_filename, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024):
-            if chunk:
-                f.write(chunk)
-    logger.info('Report downloaded to %s', report_filename)
+        pullreporturl = "https://%s:%s%s%s%s%s%s" % (nesshost, nessport, "/scans/", scanid, "/export/", filenum, "/download")
+        r = session.get(pullreporturl, headers=headers, verify=False, stream=True)
+        savfile = report_filename + "." + repformat
+        with open(savfile, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+        logger.info('Report downloaded to %s', savfile)
 
 def send_mail(send_from, send_to, subject, text, filetosend, server, port):
     msg = MIMEMultipart()
@@ -326,7 +334,9 @@ scanPolling(session)
 getReport(session)
 
 #Email Report
-send_mail(email_from, email_to, email_subject, '', report_filename, email_server, email_port)
+for repfile in report_format.split(','):
+    repformat = repfile.strip()
+    send_mail(email_from, email_to, email_subject, '', report_filename + "." + repformat, email_server, email_port)
 
 #Cleanup
 deleteScan(session)
