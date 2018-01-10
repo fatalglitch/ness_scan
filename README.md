@@ -31,25 +31,25 @@ Once your config file is updated, you can run the scanner
 
 ## Config File Format
 The config file contains several sections which need to be setup for your specific environment.
-# Server Section
+### Server Section
 Input your Nessus login and password, along with the scanner hostname or IP Address, and port
-# Scan Section
+### Scan Section
 Input the name you want for the Scan which is created, along with the description for this scan.
 The "enabled" parameter defines if the scan is set to enabled when created. You should leave this as True
 The launch parameter defines the launch style for the scan. You should leave this as "ON_DEMAND"
 Targets is used to dictate which targets you will be scanning. This is a comma seperated list and can include single IP addresses or CIDR notation networks
-# Schedule
+### Schedule
 The scheduler option can be enabled by invoking the -s flag when running the script. These settings dictate when the scan should execute
 Minute, Hour, and Day should be either 2 digit values, or * to indicate wildcard.
 LastOfMonth is used to indicate the scan should be run on the last Monday, Tuesday, etc. of the month. Valid values are days of the week, and the values are no case sensitive
-# Report
+### Report
 Reports are generated based on the values in this section
 "format" can be one of html or csv. Nessus currently does not support PDF generation
 "types" indicates the type of report to generate. The example config contains all available types. You can remove these to fine tune which report style you want.
 "filename" is the prefix for the filename to be generated and emailed. The extension of the file should not be included.
-# Email
+### Email
 Email is sent utilizing these config values. Of note specifically is the server and port of your mail server.
-# Logging
+### Logging
 Specify the log file and path. Debug can be enabled by passing -d to the script at runtime.
 
 ## Testing Options
